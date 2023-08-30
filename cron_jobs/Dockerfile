@@ -1,7 +1,7 @@
 FROM python:3.11
 
 # Install cron
-RUN apt-get update && apt-get install -y cron
+RUN apt-get update && apt-get install -y cron postgresql-client
 
 # Python Deps
 RUN pip install feedparser
@@ -19,5 +19,10 @@ RUN crontab /etc/cron.d/mycron
 # Create the log file to be able to run tail
 RUN touch /var/log/cron.log
 
+# Add the wait script to the image
+ADD wait-for-postgres.sh /wait-for-postgres.sh
+RUN chmod +x /wait-for-postgres.sh
+
+
 # Run the command on container startup
-CMD cron && tail -f /var/log/cron.log
+CMD /wait-for-postgres.sh db && cron && tail -f /var/log/cron.log
