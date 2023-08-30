@@ -1,5 +1,13 @@
+import logging
+import os
 import feedparser
+from db.generate_tables import DatabaseConfig, RSSFeedEntry
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
 
 # query 
 def rss_query(query: str):
@@ -8,19 +16,33 @@ def rss_query(query: str):
 
     feed = feedparser.parse(rss_url)
 
-    print(len(feed))
+    logging.info(os.environ)
+    session = DatabaseConfig().get_session()
+    logging.info(f"Saving {len(feed)} entries")
     for entry in feed.entries:
-        print(entry.title)
-        print(entry.link)
-        print(entry.description)
-        print('---')
+        rss_entry = RSSFeedEntry(
+            title=entry.title,
+            link=entry.link,
+            description=entry.description
+        )
+        session.add(rss_entry)
+        session.commit()
+
+    session.close()
 
 def main():
     queries = ['financial news us']
     
     for q in queries:
-        print(f"Querying: {q}")
-        rss_query(q)
+        logging.info(f"Querying: {q}")
+        try:
+            rss_query(q)
+        except Exception as e:
+            logging.error(f"Error occurred while querying: {q}")
+            logging.exception(e)
+            raise
+        
         
 if __name__ == "__main__":
     main()
+    logging.info("Execution completed.")

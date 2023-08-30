@@ -1,10 +1,8 @@
 version: '3'
 services:
   db:
-    image: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    build: ./db
+    env_file: .env  
     ports:
       - "5432:5432"
     healthcheck:
@@ -14,10 +12,10 @@ services:
       retries: 5
 
   cron_jobs:
-    image: cron_jobs
+    env_file: .env
     depends_on:
-      - db
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      POSTGRES_PASSWORD: postgres
+      db:
+        condition: service_healthy
+    build:
+      context: ./
+      dockerfile: ./cron_jobs/Dockerfile
