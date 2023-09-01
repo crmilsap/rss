@@ -4,6 +4,7 @@ FROM python:3.11
 RUN apt-get update && apt-get install -y cron postgresql-client
 RUN pip install feedparser sqlalchemy psycopg2
 # Copy the script and cron configuration
+
 COPY cron_jobs/fetch_rss.py /cron/fetch_rss.py
 COPY cron_jobs/mycron /etc/cron.d/mycron
 COPY db /cron/db

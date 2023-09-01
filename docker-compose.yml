@@ -10,6 +10,18 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "milsapcory@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "postgres"
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
 
   cron_jobs:
     env_file: .env
@@ -19,3 +31,19 @@ services:
     build:
       context: ./
       dockerfile: ./cron_jobs/Dockerfile
+
+  flask:
+    env_file: .env
+    depends_on:
+      - db
+    build:
+      context: ./
+      dockerfile: ./flask/Dockerfile
+    ports:
+      - "8080:5000"
+    volumes:
+      - ./flask:/app 
+      - ./db:/app/db
+
+volumes:
+  postgres_data:

@@ -1,48 +1,49 @@
+from datetime import datetime
 import logging
-import os
+import time
 import feedparser
-from db.generate_tables import DatabaseConfig, RSSFeedEntry
+from db.orm import DatabaseConfig, RSSFeedEntry, RssQuery
+from sqlalchemy.exc import IntegrityError
 
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
 )
-
-# query 
-def rss_query(query: str):
-    # Replace with your RSS feed URL
-    rss_url = f'https://news.google.com/rss/search?q={query.replace(" ", "+")}'
-
-    feed = feedparser.parse(rss_url)
-
-    logging.info(os.environ)
+def fetch_rss_feeds():
     session = DatabaseConfig().get_session()
-    logging.info(f"Saving {len(feed)} entries")
-    for entry in feed.entries:
-        rss_entry = RSSFeedEntry(
-            title=entry.title,
-            link=entry.link,
-            description=entry.description
-        )
-        session.add(rss_entry)
-        session.commit()
-
-    session.close()
-
-def main():
-    queries = ['financial news us']
     
-    for q in queries:
-        logging.info(f"Querying: {q}")
-        try:
-            rss_query(q)
-        except Exception as e:
-            logging.error(f"Error occurred while querying: {q}")
-            logging.exception(e)
-            raise
+    # Fetch all queries from the database
+    queries = session.query(RssQuery).all()
+    
+    for query_obj in queries:
+        query_text = query_obj.query_text
+        query_id = query_obj.id
+
+        rss_url = f'https://news.google.com/rss/search?q={query_text.replace(" ", "+")}'
+        feed = feedparser.parse(rss_url)
         
-        
+
+        logging.info(f"Fetching entries for query: {query_text}")
+        for entry in feed.entries:
+            try:
+                pub_date = datetime.fromtimestamp(time.mktime(entry.published_parsed))
+                
+                rss_entry = RSSFeedEntry(
+                    query_id=query_id,
+                    title=entry.title,
+                    link=entry.link,
+                    description=entry.description,
+                    pub_date=pub_date
+                )
+                session.add(rss_entry)
+                session.commit()
+                logging.info(f"Saved entry: {entry.title} ({entry.link})")
+            except IntegrityError:
+                session.rollback()
+                logging.info(f"Duplicate entry found, skipping: {entry.link}")
+
+
 if __name__ == "__main__":
-    main()
+    fetch_rss_feeds()
     logging.info("Execution completed.")
