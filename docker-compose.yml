@@ -23,27 +23,36 @@ services:
     depends_on:
       - db
 
-  cron_jobs:
+  cron-jobs:
     env_file: .env
     depends_on:
       db:
         condition: service_healthy
     build:
       context: ./
-      dockerfile: ./cron_jobs/Dockerfile
+      dockerfile: ./cron-jobs/Dockerfile
 
-  flask:
+  server:
     env_file: .env
     depends_on:
       - db
     build:
       context: ./
-      dockerfile: ./flask/Dockerfile
+      dockerfile: ./server/Dockerfile
     ports:
-      - "8080:5000"
+      - "8080:8080"
     volumes:
-      - ./flask:/app 
+      - ./server:/app 
       - ./db:/app/db
+
+  newsai-frontend:
+    build: ./NewsAI
+    volumes:
+      - .:/usr/app
+      - /usr/app/node_modules
+    ports:
+      - "19000:19000"
+      - "19001:19001"
 
 volumes:
   postgres_data:
