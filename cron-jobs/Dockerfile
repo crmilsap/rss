@@ -1,15 +1,14 @@
 FROM python:3.11
 
-# Install deps
-RUN apt-get update && apt-get install -y cron postgresql-client
-RUN pip install feedparser sqlalchemy psycopg2
-# Copy the script and cron configuration
+WORKDIR /cron
 
-COPY cron-jobs/fetch_rss.py /cron/fetch_rss.py
+COPY cron-jobs/ /cron
 COPY cron-jobs/mycron /etc/cron.d/mycron
 COPY db /cron/db
 
-# Give execution rights on the cron job
+RUN apt-get update && apt-get install -y cron postgresql-client
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
 RUN chmod 0644 /etc/cron.d/mycron
 
 # Apply the cron job
