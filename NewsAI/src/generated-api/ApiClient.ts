@@ -6,13 +6,13 @@ import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { OpenAPIConfig } from './core/OpenAPI';
 import { FetchHttpRequest } from './core/FetchHttpRequest';
 
-import { DefaultService } from './services/DefaultService';
+import { BrowseArticlesService } from './services/BrowseArticlesService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class ApiClient {
 
-    public readonly default: DefaultService;
+    public readonly browseArticles: BrowseArticlesService;
 
     public readonly request: BaseHttpRequest;
 
@@ -29,7 +29,7 @@ export class ApiClient {
             ENCODE_PATH: config?.ENCODE_PATH,
         });
 
-        this.default = new DefaultService(this.request);
+        this.browseArticles = new BrowseArticlesService(this.request);
     }
 }
 

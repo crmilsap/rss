@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../client";
+import {useQuery} from '@tanstack/react-query';
+import {apiClient} from '../client';
 
-
-export const useTopics = () => useQuery({
+export const useTopics = () =>
+  useQuery({
     queryKey: ['useTopics'],
-    queryFn: () => apiClient.default.getTopicsTopicsGet()
-})
+    queryFn: () => apiClient.browseArticles.getTopicsBrowseTopicsGet(),
+  });

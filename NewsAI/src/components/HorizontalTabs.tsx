@@ -1,24 +1,22 @@
 import React from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {useTopicsState} from '../contexts/TopicProvider';
 import {useTopics} from '../queries/useTopics';
+import {Topic} from '../generated-api';
 
 const HorizontalTabs = () => {
-  const tabs = ['Tab 1', 'Tab 2', 'Tab 3', 'Tab 4', 'Tab 5'];
-
   const {data} = useTopics();
-  const handleTabPress = tab => {
+  const {setSelectedId, selectedId} = useTopicsState();
+
+  const handleTabPress = (newTopic: Topic) => {
     // Handle tab press actions here
-    console.log(`Pressed ${tab}`);
+    setSelectedId(newTopic.id);
   };
 
   return (
     <ScrollView
+      // showsVerticalScrollIndicator={false}
+      // alwaysBounceVertical={false}
       horizontal={true}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.horizontalTabs}>
@@ -26,7 +24,7 @@ const HorizontalTabs = () => {
         <TouchableOpacity
           key={index}
           onPress={() => handleTabPress(x)}
-          style={styles.tab}>
+          style={[styles.tab, x.id === selectedId ? styles.selectedTab : {}]}>
           <Text style={styles.tabText}>{x.category}</Text>
         </TouchableOpacity>
       ))}
@@ -38,7 +36,6 @@ const styles = StyleSheet.create({
   horizontalTabs: {
     flexDirection: 'row',
     alignItems: 'center', // Center the tabs vertically
-    height: 50,
   },
   tab: {
     alignItems: 'center',
@@ -52,6 +49,9 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 16,
+  },
+  selectedTab: {
+    backgroundColor: '#ddd',
   },
 });
 

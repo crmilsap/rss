@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.orm import DatabaseConfig, NewsQuery, Article
 from fastapi import APIRouter
-import newspaper
+from scraping.article_handler import ArticleHandler
 
 browser = APIRouter()
 
@@ -29,40 +29,48 @@ class ArticleResponse(BaseModel):
     id: int
     title: str
     link: str
-    pubDate: datetime
+    pub_date: datetime
     image: str
-    content: str
+    content: Optional[str]
     publisher: str
     authors: List[str]
 
 
+def convert_article_to_pydantic(
+    article: Article, include_content: Optional[bool] = True
+):
+    authors = list(map(lambda a: a.name, article.authors))
+    return ArticleResponse(
+        id=article.id,
+        authors=authors,
+        content=article.content if include_content else None,
+        image=article.image,
+        link=article.link,
+        pub_date=article.pub_date,
+        publisher=article.publisher.name,
+        title=article.title,
+    )
+
+
 @browser.get("/articles", response_model=List[ArticleResponse])
-def get_topics(
+def get_articles(
     queryId: Optional[int] = None, session: Session = Depends(db_config.get_session)
 ):
-    query = session.query(Article)
+    query = session.query(Article).order_by(Article.pub_date.desc())
     if queryId is not None:
         query = query.filter(Article.query_id == queryId)
 
     rows = query.limit(50).all()
-
-    authors = list(map(lambda a: a.name, rows[0].authors))
-    logger.info(rows[0].authors)
-    logger.info(rows[0].id)
-    logger.info(rows[0].publisher.name)
-
     return list(
         map(
-            lambda x: ArticleResponse(
-                id=x.id,
-                authors=authors,
-                content=x.content,
-                image=x.image,
-                link=x.link,
-                pubDate=x.pub_date,
-                publisher=x.publisher.name,
-                title=x.title,
-            ),
+            lambda x: convert_article_to_pydantic(article=x, include_content=False),
             rows,
         )
     )
+
+
+@browser.get("/article", response_model=ArticleResponse)
+def get_article(articleId: int, session: Session = Depends(db_config.get_session)):
+    # article = session.query(Article).filter(Article.id == articleId).one()
+    article = ArticleHandler().fetch_or_retrieve_article(articleId, session)
+    return convert_article_to_pydantic(article)

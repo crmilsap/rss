@@ -3,8 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type Topic = {
-    category: string;
-    id: number;
+export type ValidationError = {
+    loc: Array<(string | number)>;
+    msg: string;
+    type: string;
 };
 

@@ -1,0 +1,30 @@
+node_modules
+
+# Dependency directories
+ios/Pods/
+android/.gradle/
+
+# Miscellaneous
+.DS_Store
+*.swp
+*.swo
+*.tmp
+*.bak
+*.swm
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# Logs
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Build artifacts
+android/app/build/
+android/build/
+

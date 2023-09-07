@@ -10,6 +10,9 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export type { ArticleResponse } from './models/ArticleResponse';
+export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { Topic } from './models/Topic';
+export type { ValidationError } from './models/ValidationError';
 
-export { DefaultService } from './services/DefaultService';
+export { BrowseArticlesService } from './services/BrowseArticlesService';

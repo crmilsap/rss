@@ -3,8 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type Topic = {
-    category: string;
-    id: number;
+import type { ValidationError } from './ValidationError';
+
+export type HTTPValidationError = {
+    detail?: Array<ValidationError>;
 };
 

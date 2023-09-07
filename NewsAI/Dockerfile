@@ -1,5 +1,5 @@
 # Use an official Node runtime as base image
-FROM node:14
+FROM node:18
 
 # Set working directory
 WORKDIR /usr/app

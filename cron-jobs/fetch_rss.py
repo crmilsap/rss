@@ -3,6 +3,7 @@ import logging
 import time
 from typing import List
 import feedparser
+from sqlalchemy import and_
 from db.orm import Article, Author, DatabaseConfig, NewsQuery, Publisher
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,27 +17,9 @@ logging.basicConfig(
 )
 
 
-class ArticleScraper:
+class RegisterArticles:
     def __init__(self) -> None:
         pass
-
-    def download_article(self, url, retries=3, backoff_factor=0.3) -> Article | None:
-        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.3"
-        config = newspaper.Config()
-        config.browser_user_agent = user_agent
-        config.request_timeout = 10
-
-        for i in range(retries):
-            try:
-                np_article = newspaper.Article(url, config=config)
-                np_article.download()
-                np_article.parse()
-                return np_article
-            except newspaper.article.ArticleException as e:
-                print(f"Download failed: {e}")
-                sleep_time = backoff_factor * (2**i)  # Exponential backoff
-                time.sleep(sleep_time + random.uniform(0, 2))  # Adding some jitter
-        return None  # Return None after exceeding max retries
 
     def insert_authors(self, authors: List[str], session: Session) -> List[Author]:
         article_authors: List[Author] = []
@@ -67,6 +50,20 @@ class ArticleScraper:
 
             logging.info(f"Fetching entries for query: {query_text}")
             for entry in feed.entries:
+                existing_entry = (
+                    session.query(Article)
+                    .where(
+                        and_(
+                            Article.link == entry.link, Article.query_id == query_obj.id
+                        )
+                    )
+                    .first()
+                )
+
+                if existing_entry is not None:
+                    logging.info(f"Skipping Duplicate: {existing_entry.title[:30]}")
+                    continue
+
                 try:
                     art = self.download_article(entry.link)
 
@@ -93,7 +90,7 @@ class ArticleScraper:
 
                     article = Article(
                         query_id=query_id,
-                        title=entry.title,
+                        title=entry.title.split(" - ")[0],
                         link=link,
                         pub_date=pub_date,
                         image=art.top_image,
@@ -109,9 +106,9 @@ class ArticleScraper:
                     session.rollback()
                     logging.info(f"Duplicate entry found, skipping: {entry.link}")
 
-                time.sleep(5)
+                time.sleep(2)
 
 
 if __name__ == "__main__":
-    ArticleScraper().fetch_rss_feeds()
+    RegisterArticles().fetch_rss_feeds()
     logging.info("Execution completed.")
